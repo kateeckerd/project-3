@@ -15,6 +15,7 @@ export class TvApp extends LitElement {
       id: null,
       title: null,
       description: null,
+      timecode: null
     };
   }
   // convention I enjoy using to define the tag's name
@@ -27,7 +28,8 @@ export class TvApp extends LitElement {
       name: { type: String },
       source: { type: String },
       listings: { type: Array },
-      activeItem: { type: Object }
+      activeItem: { type: Object },
+      activeVideo: { type: String}
     };
   }
   // LitElement convention for applying styles JUST to our element
@@ -135,8 +137,9 @@ export class TvApp extends LitElement {
                 title="${item.title}"
                 presenter="${item.metadata.author}"
                 description="${item.description}"
+                timecode="${item.metadata.timecode}"
                 video="${item.metadata.source}"
-                @click="${this.itemClick}">
+                @click="${this.openDialog}">
               </tv-channel>
             `
           )
@@ -159,27 +162,21 @@ export class TvApp extends LitElement {
 
         <div>
         <!-- discord / chat - optional -->
-        <iframe style=""
-          src="https://discord.com/widget?id=YOUR_DISCORD_SERVER_ID&theme=dark"
-          width="400"
-          height="500"
-          allowtransparency="true"
-          frameborder="0"
-          sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-        ></iframe>
+        <div class="discord">
+          <widgetbot server="954008116800938044" channel="1106691466274803723" width="100%" height="100%"><iframe title="WidgetBot Discord chat embed" allow="clipboard-write; fullscreen" src="https://e.widgetbot.io/channels/954008116800938044/1106691466274803723?api=a45a80a7-e7cf-4a79-8414-49ca31324752"></iframe></widgetbot>
+          <script src="https://cdn.jsdelivr.net/npm/@widgetbot/html-embed"></script>
+        </div>
       </div>
       </div>
-
-      <tv-channel title=${this.activeItem.title} presenter="${this.activeItem.author}">
-    <p id= "description">${this.activeItem.description} </p>
-  </tv-channel>
-
-    </div>
+      </div>
       <!-- dialog -->
-      <sl-dialog label="${this.activeItem.title}" class="dialog">
-
-      ${this.activeItem.description}
-        <sl-button slot="footer" variant="primary" @click="${this.closeDialog}">WATCH</sl-button>
+      <sl-dialog label=" ${this.activeItem.title}" class="dialog">
+        <p class="dialog-description">
+          ${this.activeItem.author}
+          ${this.activeItem.description}
+          ${this.activeItem.timecode}
+        </p>
+        <sl-button slot="footer" variant="primary" @click="${this.updateActiveVideo}">Watch</sl-button>
       </sl-dialog>
     `;
   }
@@ -197,6 +194,8 @@ export class TvApp extends LitElement {
       return searchParams.get("v");    
     } catch (error) {
       console.error("Invalid URL:", link);
+      console.log("active item video: " + this.activeVideo);
+      console.log("link: " + link);
       return null;
     }
   }
@@ -205,6 +204,17 @@ export class TvApp extends LitElement {
     return "https://www.youtube.com/embed/" + this.extractVideoID(this.activeItem.video);
   }
 
+  openDialog(e){
+    console.log(e.target)
+    const dialog = this.shadowRoot.querySelector('.dialog');
+    this.activeItem = {
+      id: e.target.id,
+      title: e.target.title,
+      description: e.target.description,
+      timecode: e.target.timecode
+    };
+    dialog.show();
+  }
   closeDialog() {
     const dialog = this.shadowRoot.querySelector('.dialog');
     dialog.hide();
