@@ -8,20 +8,18 @@ export class TvApp extends LitElement {
   // defaults
   constructor() {
     super();
-    this.name = "";
+    this.name = '';
     this.source = new URL("../assets/channels.json", import.meta.url).href;
     this.listings = [];
     this.activeItem = {
       id: null,
       title: null,
-      presenter: null,
       description: null,
-      video: null
-    }
+    };
   }
   // convention I enjoy using to define the tag's name
   static get tag() {
-    return "tv-app";
+    return 'tv-app';
   }
   // LitElement convention so we update render() when values change
   static get properties() {
@@ -38,6 +36,8 @@ export class TvApp extends LitElement {
       css`
       :host {
         display: block; 
+        margin: 16px;
+        padding: 16px;
       }
 
       header {
@@ -51,7 +51,7 @@ export class TvApp extends LitElement {
         margin-bottom: 16px;
       }
 
-      /* .listing-container {
+       .listing-container {
         justify-self: center;
         max-width: 1344px;
         justify-items: left;
@@ -71,7 +71,7 @@ export class TvApp extends LitElement {
         animation-duration: 1s;
         line-height: 1.5;
         font-size: 1em;
-      } */ 
+      } 
 
       .channel-container {
         margin-left: 16px;
@@ -134,36 +134,52 @@ export class TvApp extends LitElement {
                 id="${item.id}"
                 title="${item.title}"
                 presenter="${item.metadata.author}"
-                description="${item.metadata.description}"
+                description="${item.description}"
                 video="${item.metadata.source}"
                 @click="${this.itemClick}">
               </tv-channel>
             `
           )
         }
+</div>
+      <div>
+        <h1 class="title-container">
+      ${this.activeItem.title}
+      
+    </h1>
+    <div style="display: inline-flex">
+        <!-- video -->
+        <iframe style="margin: 30px;"
+          width="750"
+          height="400"
+          src="https://www.youtube.com/embed/9MT-BNuUCpM" 
+          frameborder="0"
+          allowfullscreen
+        ></iframe>
+
+        <div>
+        <!-- discord / chat - optional -->
+        <iframe style=""
+          src="https://discord.com/widget?id=YOUR_DISCORD_SERVER_ID&theme=dark"
+          width="400"
+          height="500"
+          allowtransparency="true"
+          frameborder="0"
+          sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+        ></iframe>
+      </div>
       </div>
 
-      <div class="player-container">
-        <!-- video -->
-        <iframe class="player"
-          src="${this.createSource()}"
-          frameborder="0"
-          allowfullscreen>
-        </iframe>
-        <!-- discord / chat - optional -->
-        <div class="discord">
-          <widgetbot server="954008116800938044" channel="1106691466274803723" width="100%" height="100%"><iframe title="WidgetBot Discord chat embed" allow="clipboard-write; fullscreen" src="https://e.widgetbot.io/channels/954008116800938044/1106691466274803723?api=a45a80a7-e7cf-4a79-8414-49ca31324752"></iframe></widgetbot>
-          <script src="https://cdn.jsdelivr.net/npm/@widgetbot/html-embed"></script>
-        </div>
-      </div>
-      </div>
+      <tv-channel title=${this.activeItem.title} presenter="${this.activeItem.author}">
+    <p id= "description">${this.activeItem.description} </p>
+  </tv-channel>
+
+    </div>
       <!-- dialog -->
-      <sl-dialog label=" ${this.activeItem.title}" class="dialog">
-        <p class="dialog-description">
-          ${this.activeItem.author}
-          ${this.activeItem.description}
-        </p>
-        <sl-button slot="footer" variant="primary" @click="${this.watchVideo}">Watch</sl-button>
+      <sl-dialog label="${this.activeItem.title}" class="dialog">
+
+      ${this.activeItem.description}
+        <sl-button slot="footer" variant="primary" @click="${this.closeDialog}">WATCH</sl-button>
       </sl-dialog>
     `;
   }
@@ -194,20 +210,25 @@ export class TvApp extends LitElement {
     dialog.hide();
   }
 
-  watchVideo() {
-    this.changeVideo(); 
-  }
 
   itemClick(e) {
     this.activeItem = {
-      id: e.target.id,
       title: e.target.title,
-      presenter: e.target.presenter,
+      id: e.target.id,
       description: e.target.description,
-      video: e.target.video
+      video: e.target.video,
     };
+    this.changeVideo();
     const dialog = this.shadowRoot.querySelector('.dialog');
     dialog.show();
+
+    this.dispatchEvent(
+      new CustomEvent('active-item-changed', {
+        bubbles: true,
+        composed: true,
+        detail: { activeItem: this.activeItem },
+      })
+    );
   }
 
   // LitElement life cycle for when any property changes
